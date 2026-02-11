@@ -125,7 +125,7 @@ Rootify allows for flexible development workflows using either the provided `rif
 
 ### 1. The `rify` Utility Wrapper
 
-Rootify includes a professional-grade wrapper script (`rify.sh` for Linux/macOS, `rify.bat` for Windows) to orchestrate complex build contexts and execution modes.
+Rootify includes a high-performance wrapper script (`rify.sh` for Linux/macOS, `rify.bat` for Windows) to orchestrate complex build contexts and execution modes.
 
 #### Command Syntax
 
@@ -194,24 +194,46 @@ flutter build apk --release --split-per-abi -P[context]
 # or
 flutter build apk --release --split-per-abi -Pctx=[ctx]
 
-# Example: Building a Stable Release
-flutter build apk --release --split-per-abi -Pstable
-# or
-flutter build apk --release --split-per-abi -Pctx=stable
-
 # Without --split-per-abi
 flutter build apk --release -P[ctx]
 # or
 flutter build apk --release -Pctx=[ctx]
 
-# Example: Building a Stable Release
-flutter build apk --release -Pstable
+# Standard Build Pattern
+# Release Build (Without ctx)
+flutter build apk --release
 # or
-flutter build apk --release -Pctx=stable
+flutter build apk -release
+
+# Debug Build (Without ctx)
+flutter build apk --debug
+# or
+flutter build apk -debug
+
+# Profile Build (Without ctx)
+flutter build apk --profile
+# or
+flutter build apk -profile
+
 ```
 
 > [!IMPORTANT]
 > **Versioning Logic**: To prevent build number "bloat" during development, `android/app/version.properties` only increments when using the `build` command (Release tasks). Using `rify run` or `flutter run` will keep the current build count persistent.
+
+### 3. Release Signing Configuration
+
+Rootify uses a secure signing system that separates production credentials from the source code.
+
+#### Key Setup
+
+1.  **Template**: Copy `android/key.properties.example` to `android/key.properties`.
+2.  **Configuration**: Fill in your keystore path, alias, and passwords in `key.properties`.
+3.  **Security**: The `key.properties` file is gitignored to protect your credentials.
+
+#### Logic & Fallbacks
+
+- **Production builds**: If `key.properties` is present, `release` and `profile` builds will be cryptographically signed with your key.
+- **Development builds**: If `key.properties` is missing, the build system gracefully falls back to the standard Android `debug` signing key. This ensures high portability for new contributors.
 
 ## Contributing to Rootify
 
@@ -235,7 +257,7 @@ Rootify is an open-community project that welcomes contributions from developers
 
 - **Single Responsibility**: Each PR should address a single issue or implement a single feature.
 - **Documentation**: Update relevant documentation and comments alongside code changes.
-- **Commit Messages**: Use clear, concise, and professional English for all commit messages.
+- **Commit Messages**: Use clear, concise, and technical English for all commit messages.
 - **Code Review**: Prepare for a technical review process where maintainers may suggest refinements for performance or stability.
 
 ### Technical & Engineering Standards
@@ -243,7 +265,7 @@ Rootify is an open-community project that welcomes contributions from developers
 1.  **Licensing**: All contributions are submitted under the **Apache License 2.0**. Every new file must include the project's official copyright header.
 2.  **Linguistic Consistency**:
     - Use technical **English** for all source code, documentation, and commit messages.
-    - Maintain a professional and precise tone across all technical communications.
+    - Maintain a clear and precise tone across all technical communications.
 3.  **Hierarchy of Comments**:
     - **Category/Main Blocks**: `// ---- Comment Here ----` (For major logic blocks or classes)
     - **Sub-sections**: `// --- Comment Here` (For specific logic groups)

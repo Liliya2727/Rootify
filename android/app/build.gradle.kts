@@ -51,10 +51,12 @@ fun getAppVersionConfig(): Map<String, Any> {
     val groupKey = buildContext
     
     // --- Smart Version Increment Logic
-    // Increments version code strictly for Release builds to prevent development-time bloat.
-    val isReleaseBuild = project.gradle.startParameter.taskNames.any { 
+    // Increments version code strictly for standalone Release builds to prevent development-time bloat.
+    // Detection Heuristic: Only increments for direct build tasks (assemble/bundle), NOT during 'run'/install flows.
+    val taskNames = project.gradle.startParameter.taskNames
+    val isReleaseBuild = taskNames.any { 
         (it.contains("assemble") || it.contains("bundle")) && it.contains("Release") 
-    }
+    } && taskNames.none { it.contains("install") }
     
     val currentCount = if (isReleaseBuild) {
         val next = (props["${groupKey}_count"]?.toString() ?: "0").toInt() + 1
@@ -105,6 +107,14 @@ plugins {
 }
 
 // ---- ANDROID PROJECT SETTINGS ----
+// ---- SECURE SIGNING CONFIGURATION ----
+// Load keystore credentials from external properties for release builds.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("android/key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 // Core SDK targets, compilation options, and build variant configurations.
 android {
     namespace = "com.aby.rootify"
@@ -120,6 +130,24 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+
+    // --- Keystore Orchestration
+    signingConfigs {
+        getByName("debug") {
+            // Standard Android debug signing
+        }
+        create("release") {
+            // Production signing with secure fallback to debug if key.properties is missing
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 
@@ -141,10 +169,17 @@ android {
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
         }
+        getByName("profile") {
+            // Performance profiling mode (AOT)
+            initWith(getByName("release"))
+            isDebuggable = true
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            matchingFallbacks.add("release")
+        }
         getByName("release") {
             // Production deployment mode (AOT)
             isDebuggable = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
             isShrinkResources = false
             isMinifyEnabled = false
         }
@@ -154,19 +189,37 @@ android {
 // ---- POST-BUILD AUTOMATION PIPELINE ----
 // Automated deployment logic executed after successful compilation.
 afterEvaluate {
-    tasks.named("assembleRelease") {
-        doLast {
+    // Orchestrate deployment for Debug, Release, and Profile binaries.
+    val targetTasks = listOf("assembleDebug", "assembleProfile", "assembleRelease")
+    targetTasks.forEach { taskName ->
+        tasks.findByName(taskName)?.doLast {
             val outputDir = file("$buildDir/outputs/flutter-apk")
             val homeDir = System.getProperty("user.home")
+            val currentTime = SimpleDateFormat("HH-mm-ss").format(Date())
             val date = SimpleDateFormat("yyyyMMdd").format(Date())
             val projectName = "rootify"
             val label = appConfig["label"]
             val ctx = appConfig["context"].toString()
             val bNumber = appConfig["build"]
+            val buildMode = when {
+                taskName.contains("Profile") -> "profile"
+                taskName.contains("Debug") -> "debug"
+                else -> "release"
+            }
 
+            // --- Run Detection Heuristic
+            // Development runs are identified by the presence of an 'install' task.
+            val isInstallFlow = project.gradle.startParameter.taskNames.any { it.contains("install") }
+            
             // --- Destination Directory Mapping
-            val destDirName = ctx.capitalize()
-            val destDir = File("$homeDir/Apps/$destDirName")
+            val destDir = if (isInstallFlow) {
+                // Development runs go to a timestamped archive to prevent run-time state pollution.
+                File("$homeDir/Apps/Run/$currentTime.run")
+            } else {
+                // Standalone builds go to their respective context-named directories.
+                val destDirName = ctx.capitalize()
+                File("$homeDir/Apps/$destDirName")
+            }
             
             if (!destDir.exists()) {
                 destDir.mkdirs()
@@ -175,8 +228,8 @@ afterEvaluate {
             // --- ABI-Specific Deployment (ARM Optimized)
             if (outputDir.exists()) {
                 outputDir.listFiles()?.forEach { file ->
-                    // Process only relevant release APKs
-                    if (file.name.startsWith("app-") && file.name.endsWith("-release.apk")) {
+                    // Process only relevant build-mode APKs
+                    if (file.name.startsWith("app-") && file.name.endsWith("-$buildMode.apk")) {
                         
                         // --- Architecture Filtering (Exclude x86/x86_64)
                         val abi = when {
@@ -186,12 +239,13 @@ afterEvaluate {
                         }
                         
                         if (abi != null) {
-                            val newName = "$projectName-$abi-$label-$ctx-$date-b$bNumber.apk"
+                            val runtimeMeta = if (isInstallFlow) "-run" else ""
+                            val newName = "$projectName-$abi-$label-$ctx-$date-b$bNumber-$buildMode$runtimeMeta.apk"
                             val destFile = File(destDir, newName)
                             
                             // Deploy file to targeted Apps directory
                             file.copyTo(destFile, overwrite = true)
-                            println("Success: $newName -> ~/Apps/$destDirName/")
+                            println("Success: $newName -> ${destDir.absolutePath.replace(homeDir, "~")}/")
                         }
                     }
                 }

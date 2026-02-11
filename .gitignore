@@ -44,6 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/app/version.properties
+/android/key.properties
 
 # Third Party Modules
 /RiProG Thermal Universal 8.1.0/

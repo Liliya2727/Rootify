@@ -91,16 +91,32 @@ echo   -p                 Profile Mode (Performance AOT)
 echo   -r                 Release Mode (Standard AOT)
 echo.
 echo MANUAL COMMAND EQUIVALENTS:
-echo   Run Beta (Profile):   flutter run --profile -Pctx=beta
+echo   # Run Beta build in Profile mode
+echo   flutter run --profile -Pctx=beta
 echo   # or: flutter run -profile -Pbeta
 echo.
-echo   Build Stable (split): flutter build apk --release --split-per-abi -Pctx=stable
+echo   # Build Stable Production APKs
+echo   flutter build apk --release --split-per-abi -Pctx=stable
 echo   # or: flutter build apk --release -Pstable
+echo.
+echo   # Standard Build Pattern
+echo   # Release Build (Without ctx)
+echo   flutter build apk --release
+echo   # or: flutter build apk -release
+echo.
+echo   # Debug Build (Without ctx)
+echo   flutter build apk --debug
+echo   # or: flutter build apk -debug
+echo.
+echo   # Profile Build (Without ctx)
+echo   flutter build apk --profile
+echo   # or: flutter build apk -profile
 echo.
 echo ENVIRONMENT:
 echo   - Flutter SDK      Stable channel.
 echo   - JDK 17           Required for Gradle.
 echo   - JAVA_HOME        Must point to JDK 17.
+echo   - Signing          key.properties (Fallback to Debug).
 echo.
 echo EXAMPLES:
 echo   rify.bat run -beta -p      # Run Beta build in Profile mode
