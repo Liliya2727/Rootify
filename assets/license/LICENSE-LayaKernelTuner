@@ -1,0 +1,120 @@
+Laya Kernel-Tuner License
+Version 1.1
+
+Copyright (c) 2026 Laynsb
+All rights reserved.
+
+==============================================
+1. License Scope and Nature
+
+   This software is not open-source.
+
+   This license governs the use of the compiled, machine-readable form of the
+   Laya Kernel-Tuner software (the “Binary”), including any binaries produced
+   from it.
+
+   Source code is not licensed for use, modification, or redistribution under
+   this agreement.
+
+----------------------------------------------
+
+2. License Grant
+
+   You are granted a non-exclusive, royalty-free, revocable license to:
+
+   - Use the Binary for personal, educational, or commercial purposes
+   - Copy and redistribute the unmodified Binary
+
+   Subject to the conditions set forth in this License.
+
+----------------------------------------------
+
+3. Attribution Requirement
+
+   Any public or private redistribution, inclusion, or use of the Binary must
+   include visible credit to the original author:
+
+     > "by Laynsb"
+
+   Attribution must appear in a reasonably prominent location, such as:
+
+   - An “About” page
+   - Documentation
+   - Product credits
+   - Accompanying materials
+
+   Hidden, obfuscated, or indirect attribution does not satisfy this requirement.
+
+----------------------------------------------
+
+4. Restrictions
+
+   You may not:
+
+   - Modify the Binary
+   - Decompile, disassemble, or reverse engineer the Binary
+   - Create derivative works based on the Binary
+   - Redistribute modified or repackaged versions
+   - Attempt to bypass, disable, or circumvent any protection or obfuscation
+     mechanisms
+
+   Except where such restrictions are expressly prohibited by applicable law.
+
+----------------------------------------------
+
+5. No Warranty
+
+   The Binary is provided “AS IS”, without warranty of any kind, express or
+   implied, including but not limited to:
+
+   - Merchantability
+   - Fitness for a particular purpose
+   - Non-infringement
+
+   Use of the Binary is entirely at your own risk.
+
+----------------------------------------------
+
+6. Limitation of Liability
+
+   To the maximum extent permitted by law, the author shall not be liable for
+   any damages arising from the use or inability to use the Binary, including
+   but not limited to:
+
+   - Loss of data
+   - Loss of profits
+   - System failure
+   - Business interruption
+   - Incidental or consequential damages
+
+   Even if advised of the possibility of such damages.
+
+----------------------------------------------
+
+7. Termination
+
+   This license terminates automatically if any of its terms are violated.
+
+   Upon termination, you must immediately:
+
+   - Cease all use of the Binary
+   - Delete all copies in your possession
+   - Discontinue all redistribution
+
+----------------------------------------------
+
+8. Governing Law
+
+   This License shall be governed by and construed in accordance with the laws
+   of the author’s jurisdiction of residence, unless otherwise required by
+   applicable law.
+
+----------------------------------------------
+
+9. Acceptance
+
+   By using, copying, or distributing this Binary, you acknowledge that you
+   have read, understood, and agreed to be bound by the terms of this License.
+
+==============================================
+End of License
