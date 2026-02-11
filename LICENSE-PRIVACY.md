@@ -24,7 +24,7 @@ Rootify requires certain permissions to function effectively:
 
 - **ROOT ACCESS**: Necessary to perform system-level tweaks and access system logs (Logcat).
 - **FILE STORAGE**: Used to save your preferred configurations and export log files.
-- **NETWORK ACCESS**: Used only to provide external links to the official GitHub repository and Telegram support channel. No data is transmitted in the background.
+- **NETWORK ACCESS**: Used only to provide external links to the official GitHub repository and Telegram Support Group. No data is transmitted in the background.
 
 ## 4. THIRD-PARTY LINKS
 

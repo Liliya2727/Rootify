@@ -337,7 +337,7 @@ class _AppInfoPageState extends ConsumerState<AppInfoPage> {
                         ),
                         _InfoLinkTile(
                           icon: LucideIcons.send,
-                          title: "Telegram Channel",
+                          title: "Telegram Support Group",
                           subtitle: "Latest news and updates",
                           onTap: () => _launchUrl("https://t.me/AbyRootify"),
                         ),

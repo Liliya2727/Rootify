@@ -15,9 +15,9 @@ All system optimizations, resource monitoring, and configuration changes are pro
 
 3. PERMISSIONS & USAGE
 Rootify requires certain permissions to function effectively:
-- ROOT ACCESS: Necessary to perform system-level tweaks and access system logs (Logcat).
+- ROOT ACCESS: Necessary to perform features and access system logs (Logcat).
 - FILE STORAGE: Used to save your preferred configurations and export log files.
-- NETWORK ACCESS: Used only to provide external links to the official GitHub repository and Telegram support channel. No data is transmitted in the background.
+- NETWORK ACCESS: Used only to provide external links to the official GitHub repository and Telegram support Group. No data is transmitted in the background.
 
 4. THIRD-PARTY LINKS
 The application contains links to external sites (GitHub, Telegram). These sites have their own privacy policies, and Rootify is not responsible for their content or practices.
@@ -26,7 +26,7 @@ The application contains links to external sites (GitHub, Telegram). These sites
 Since no data is collected or transmitted, there is no risk of your data being compromised from our side. We recommend keeping your device secure and managing root permissions carefully.
 
 6. CONTACT
-If you have questions about this policy or the application's privacy practices, contact @AbyRootify via the official Telegram channel.
+If you have questions about this policy or the application's privacy practices, contact @AbyRootify via the official Telegram Support Group.
 
 ---
 Your trust is our priority. Thank you for choosing Rootify!

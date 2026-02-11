@@ -280,7 +280,7 @@ Rootify stands on the shoulders of giants in the Android optimization community.
 
 - **Dizzy (Developer)**: [Dizzy](https://t.me/WzdDizzyFlasherr)
 - **Laynsb (Laya Developer)**: [Laynsb](https://t.me/Laynsb)
-- **Telegram Channel**: [Rootify](https://t.me/AbyRootify)
+- **Telegram Support Group**: [Rootify](https://t.me/AbyRootify)
 
 ### Inspirations
 
