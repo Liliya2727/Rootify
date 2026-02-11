@@ -14,42 +14,74 @@
  * limitations under the License.
  */
 
+// ---- CORE IMPORTS & LIBRARIES ----
+// Standard library dependencies for dynamic versioning and build orchestration.
 import java.util.Properties
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 
+// ---- APPLICATION VERSIONING CONFIGURATION ----
+// Logic for dynamic version code and version name generation based on build context.
 fun getAppVersionConfig(): Map<String, Any> {
     val versionFile = file("version.properties")
     val props = Properties()
     
+    // --- File initialization
     if (!versionFile.exists()) {
         versionFile.createNewFile()
     }
     
+    // --- Property persistence loading
     FileInputStream(versionFile).use { props.load(it) }
 
-    val buildContext = if (project.hasProperty("ctx")) project.property("ctx").toString() else "stable"
-    val groupKey = if (buildContext in listOf("alpha", "beta")) "test_group" else buildContext
+    // --- Build context determination
+    // Prioritizes explicit -Pctx=[context] followed by shorthand flags (-Palpha, -Pbeta, etc.).
+    val buildContext = when {
+        project.hasProperty("ctx") -> project.property("ctx").toString()
+        project.hasProperty("alpha") -> "alpha"
+        project.hasProperty("beta") -> "beta"
+        project.hasProperty("rc") -> "rc"
+        project.hasProperty("stable") -> "stable"
+        else -> "stable"
+    }
     
-    // Only increment version if strictly building (to avoid bloat on IDE sync)
-    val isBuild = project.gradle.startParameter.taskNames.any { it.contains("assemble") || it.contains("bundle") }
-    val currentCount = if (isBuild) {
+    // --- Versioning group mapping
+    val groupKey = buildContext
+    
+    // --- Smart Version Increment Logic
+    // Increments version code strictly for Release builds to prevent development-time bloat.
+    val isReleaseBuild = project.gradle.startParameter.taskNames.any { 
+        (it.contains("assemble") || it.contains("bundle")) && it.contains("Release") 
+    }
+    
+    val currentCount = if (isReleaseBuild) {
         val next = (props["${groupKey}_count"]?.toString() ?: "0").toInt() + 1
         props["${groupKey}_count"] = next.toString()
-        FileOutputStream(versionFile).use { props.store(it, null) }
+        
+        // --- Save properties with copyright header
+        FileOutputStream(versionFile).use { out ->
+            out.write(("""#
+# Copyright (C) 2026 Rootify - Aby - FoxLabs
+# Licensed under the Apache License, Version 2.0
+#
+""").trimIndent().toByteArray())
+            props.store(out, null)
+        }
         next
     } else {
         (props["${groupKey}_count"]?.toString() ?: "0").toInt()
     }
 
+    // --- Semantic version construction
     val baseVersion = when (buildContext) {
         "alpha", "beta" -> "0.9.$currentCount"
         "rc" -> "0.9.9.$currentCount"
         else -> "1.0.$currentCount"
     }
 
+    // --- Metadata generation
     val timestamp = SimpleDateFormat("yyMMdd").format(Date())
     
     return mapOf(
@@ -61,19 +93,25 @@ fun getAppVersionConfig(): Map<String, Any> {
     )
 }
 
+// Global configuration initialization
 val appConfig = getAppVersionConfig()
 
+// ---- PLUGIN CONFIGURATION ----
+// Android and Flutter integration plugin definitions.
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// ---- ANDROID PROJECT SETTINGS ----
+// Core SDK targets, compilation options, and build variant configurations.
 android {
     namespace = "com.aby.rootify"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    // --- Java & Kotlin Language Compatibility
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -85,23 +123,26 @@ android {
         }
     }
 
+    // --- Default Application Configuration
     defaultConfig {
         applicationId = "com.aby.rootify"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         
+        // Dynamic version assignment from getAppVersionConfig
         versionCode = appConfig["code"] as Int
         versionName = appConfig["name"] as String
     }
 
+    // --- Build Variant Management
     buildTypes {
         getByName("debug") {
-            // Explicitly set debuggable true for debug builds
+            // Standard development mode (JIT)
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
         }
         getByName("release") {
-            // Ensure release is not debuggable
+            // Production deployment mode (AOT)
             isDebuggable = false
             signingConfig = signingConfigs.getByName("debug")
             isShrinkResources = false
@@ -110,6 +151,8 @@ android {
     }
 }
 
+// ---- POST-BUILD AUTOMATION PIPELINE ----
+// Automated deployment logic executed after successful compilation.
 afterEvaluate {
     tasks.named("assembleRelease") {
         doLast {
@@ -121,33 +164,35 @@ afterEvaluate {
             val ctx = appConfig["context"].toString()
             val bNumber = appConfig["build"]
 
+            // --- Destination Directory Mapping
             val destDirName = ctx.capitalize()
             val destDir = File("$homeDir/Apps/$destDirName")
             
-            // Create destination directory if it doesn't exist
             if (!destDir.exists()) {
                 destDir.mkdirs()
             }
             
+            // --- ABI-Specific Deployment (ARM Optimized)
             if (outputDir.exists()) {
                 outputDir.listFiles()?.forEach { file ->
+                    // Process only relevant release APKs
                     if (file.name.startsWith("app-") && file.name.endsWith("-release.apk")) {
-                        // Extract ABI from filename
+                        
+                        // --- Architecture Filtering (Exclude x86/x86_64)
                         val abi = when {
                             file.name.contains("arm64-v8a") -> "arm64-v8a"
                             file.name.contains("armeabi-v7a") -> "armeabi-v7a"
-                            file.name.contains("x86_64") -> "x86_64"
-                            file.name.contains("x86") -> "x86"
-                            else -> "universal"
+                            else -> null // Skip non-ARM architectures
                         }
                         
-                        val newName = "$projectName-$abi-$label-$ctx-$date-b$bNumber.apk"
-                        val destFile = File(destDir, newName)
-                        
-                        // Copy APK to destination (keep original for Flutter validation)
-                        file.copyTo(destFile, overwrite = true)
-                        
-                        println("Copied: $newName -> ~/Apps/$destDirName/")
+                        if (abi != null) {
+                            val newName = "$projectName-$abi-$label-$ctx-$date-b$bNumber.apk"
+                            val destFile = File(destDir, newName)
+                            
+                            // Deploy file to targeted Apps directory
+                            file.copyTo(destFile, overwrite = true)
+                            println("Success: $newName -> ~/Apps/$destDirName/")
+                        }
                     }
                 }
             }
@@ -155,6 +200,7 @@ afterEvaluate {
     }
 }
 
+// ---- FLUTTER CORE INTEGRATION ----
 flutter {
     source = "../.."
 }
