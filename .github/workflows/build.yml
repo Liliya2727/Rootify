@@ -1,0 +1,52 @@
+name: Flutter Build APK
+
+# Kapan action ini jalan? Saat ada push ke branch main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build APK
+    # Kita pinjam komputer Linux (Ubuntu) punya GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Ambil kodingan dari repo kita
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Siapkan Java (Dibutuhkan oleh Android Gradle)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17' # Flutter terbaru biasanya butuh Java 17
+
+      # 3. Install Flutter di server GitHub
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          # flutter-version: '3.19.0' # Opsional: kalau mau versi spesifik
+
+      # 4. Download library/packages
+      - name: Get Dependencies
+        run: flutter pub get
+
+      # 5. Build APK (Mode release)
+      # Catatan: Ini akan build unsigned APK atau debug key 
+      # kecuali kamu sudah setup signing config di android/app/build.gradle
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+
+      # 6. Upload hasil Build (APK) supaya bisa kita download
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          # Path di atas bisa beda tergantung hasil build, 
+          # kalau mau aman ambil semua: build/app/outputs/flutter-apk/*.apk
