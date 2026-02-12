@@ -45,8 +45,6 @@ class _FpsMeterOverlayState extends ConsumerState<FpsMeterOverlay> {
         setState(() {
           _isLocked = data['locked'] == true;
         });
-        // Catatan: Jika ingin overlay tetap di posisi terakhir, 
-        // sebaiknya hapus logika moveOverlay(0,0) di sini.
       }
     });
   }
@@ -55,26 +53,24 @@ class _FpsMeterOverlayState extends ConsumerState<FpsMeterOverlay> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: Stack( // Gunakan Stack agar kita bisa mengontrol posisi & ukuran
-        children: [
-          Align(
-            alignment: Alignment.topLeft, // Memaksa widget mengkerut ke pojok
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanUpdate: (details) {
-                if (!_isLocked) {
-                  FlutterOverlayWindow.moveOverlay(
-                    OverlayPosition(
-                      details.globalPosition.dx,
-                      details.globalPosition.dy,
-                    ),
-                  );
-                }
-              },
-              child: _FpsPill(isLocked: _isLocked),
-            ),
-          ),
-        ],
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanUpdate: (details) {
+          if (!_isLocked) {
+            // Kita pindahkan Jendela-nya, bukan Widget-nya
+            FlutterOverlayWindow.moveOverlay(
+              OverlayPosition(
+                details.globalPosition.dx,
+                details.globalPosition.dy,
+              ),
+            );
+          }
+        },
+        // Hapus Stack dan Align. Langsung panggil Pill.
+        // Berikan Center agar Pill tetap rapi di dalam jendela kecilnya.
+        child: Center(
+          child: _FpsPill(isLocked: _isLocked),
+        ),
       ),
     );
   }
@@ -91,64 +87,44 @@ class _FpsPill extends ConsumerWidget {
     final double fps = stats?.fps ?? 0.0;
 
     Color statusColor = const Color(0xFF00E676);
-    if (fps < 30) {
-      statusColor = const Color(0xFFFF1744);
-    } else if (fps < 50) {
-      statusColor = const Color(0xFFFF9100);
-    }
+    if (fps < 30) statusColor = const Color(0xFFFF1744);
+    else if (fps < 50) statusColor = const Color(0xFFFF9100);
 
     return Material(
       type: MaterialType.transparency,
       child: Container(
-        // Padding horizontal lebih lebar dari vertical untuk efek "Pill"
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        // Pakai padding agar konten tidak mepet ke pinggir jendela
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xEE000000), 
-          // Pakai radius besar (misal 50) untuk bentuk Pill sempurna
+          color: const Color(0xEE121212),
           borderRadius: BorderRadius.circular(50), 
           border: Border.all(
-            color: statusColor.withOpacity(0.5),
+            color: statusColor.withOpacity(0.4),
             width: 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            )
-          ]
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // SANGAT PENTING agar tidak melar horizontal
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, // Penting agar tidak melar
           children: [
-            // Indikator titik (dot) biar makin estetik
+            // Dot indicator
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                color: statusColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "FPS",
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white.withOpacity(0.7),
-              ),
+              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
+            const Text(
+              "FPS",
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70),
+            ),
+            const SizedBox(width: 4),
             Text(
               fps.toStringAsFixed(0),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.black,
                 fontFamily: 'Monospace',
                 color: Colors.white,
-                height: 1.2,
               ),
             ),
           ],
@@ -157,4 +133,3 @@ class _FpsPill extends ConsumerWidget {
     );
   }
 }
-
