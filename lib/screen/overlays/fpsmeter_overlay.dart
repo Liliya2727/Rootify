@@ -33,52 +33,48 @@ class FpsMeterOverlay extends ConsumerStatefulWidget {
   ConsumerState<FpsMeterOverlay> createState() => _FpsMeterOverlayState();
 }
 
+// ---- MAJOR ---
 class _FpsMeterOverlayState extends ConsumerState<FpsMeterOverlay> {
-  // --- Fields
   bool _isLocked = false;
 
-  // --- Lifecycle
   @override
   void initState() {
     super.initState();
     FlutterOverlayWindow.overlayListener.listen((data) {
       if (data is Map && data.containsKey('locked')) {
-        final locked = data['locked'] == true;
         setState(() {
-          _isLocked = locked;
+          _isLocked = data['locked'] == true;
         });
-
-        // Jump logic
-        if (locked) {
-          FlutterOverlayWindow.moveOverlay(const OverlayPosition(0, 0));
-        } else {
-          FlutterOverlayWindow.moveOverlay(const OverlayPosition(0, 400));
-        }
+        // Catatan: Jika ingin overlay tetap di posisi terakhir, 
+        // sebaiknya hapus logika moveOverlay(0,0) di sini.
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // FIX: Hapus FittedBox & Center.
-    // Struktur: Directionality -> GestureDetector -> Container (Pill).
-    // Ini bikin widgetnya cuma segede isinya (shrink wrap).
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque, // Cuma nangkep touch di visual widget
-        onPanUpdate: (details) {
-          if (!_isLocked) {
-            FlutterOverlayWindow.moveOverlay(
-              OverlayPosition(
-                details.globalPosition.dx,
-                details.globalPosition.dy,
-              ),
-            );
-          }
-        },
-        // Widget Pill langsung di sini, tanpa wrapper layout yang aneh-aneh
-        child: _FpsPill(isLocked: _isLocked),
+      child: Stack( // Gunakan Stack agar kita bisa mengontrol posisi & ukuran
+        children: [
+          Align(
+            alignment: Alignment.topLeft, // Memaksa widget mengkerut ke pojok
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (details) {
+                if (!_isLocked) {
+                  FlutterOverlayWindow.moveOverlay(
+                    OverlayPosition(
+                      details.globalPosition.dx,
+                      details.globalPosition.dy,
+                    ),
+                  );
+                }
+              },
+              child: _FpsPill(isLocked: _isLocked),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -101,49 +97,58 @@ class _FpsPill extends ConsumerWidget {
       statusColor = const Color(0xFFFF9100);
     }
 
-    // Gunakan Material disini HANYA untuk styling, bukan layouting
     return Material(
-      color: Colors.transparent,
       type: MaterialType.transparency,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        // Padding horizontal lebih lebar dari vertical untuk efek "Pill"
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-            color: const Color(
-                0xCC000000), // Sedikit lebih gelap biar solid (0xCC)
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: statusColor.withValues(alpha: 0.3),
-              width: 0.5,
-            ),
-            boxShadow: [
-              // Opsional: Shadow tipis biar makin keliatan "melayang" pisah dari background
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              )
-            ]),
+          color: const Color(0xEE000000), 
+          // Pakai radius besar (misal 50) untuk bentuk Pill sempurna
+          borderRadius: BorderRadius.circular(50), 
+          border: Border.all(
+            color: statusColor.withOpacity(0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            )
+          ]
+        ),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // PENTING: Biar gak melar
+          mainAxisSize: MainAxisSize.min, // SANGAT PENTING agar tidak melar horizontal
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Indikator titik (dot) biar makin estetik
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
             Text(
               "FPS",
               style: TextStyle(
-                fontSize: 10, // Sedikit digedein biar enak baca
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.white.withValues(alpha: 0.7),
+                color: Colors.white.withOpacity(0.7),
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 6),
             Text(
               fps.toStringAsFixed(0),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Monospace',
-                color: statusColor,
-                height: 1.0,
+                color: Colors.white,
+                height: 1.2,
               ),
             ),
           ],
@@ -152,3 +157,4 @@ class _FpsPill extends ConsumerWidget {
     );
   }
 }
+

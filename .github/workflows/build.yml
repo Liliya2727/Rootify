@@ -35,18 +35,16 @@ jobs:
       # 4. Download library/packages
       - name: Get Dependencies
         run: flutter pub get
-
-      # 5. Build APK (Mode release)
-      # Catatan: Ini akan build unsigned APK atau debug key 
-      # kecuali kamu sudah setup signing config di android/app/build.gradle
-      - name: Build APK
-        run: flutter build apk --release --split-per-abi
+      
+      - name: Build Debug APK
+        run: flutter build apk --debug --split-per-abi
 
       # 6. Upload hasil Build (APK) supaya bisa kita download
-      - name: Upload APK
+      - name: Upload All Debug APKs
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          name: all-debug-apks
+          # Menggunakan wildcard (*) agar semua file APK di dalam folder tersebut terambil
+          path: build/app/outputs/flutter-apk/*.apk
           # Path di atas bisa beda tergantung hasil build, 
           # kalau mau aman ambil semua: build/app/outputs/flutter-apk/*.apk
